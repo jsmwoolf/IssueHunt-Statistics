@@ -2,6 +2,10 @@
 
 Created with React, this application displays statistics for IssueHunt repositories.
 
+## Software Prerequisites
+
+To run the application, you'll need to install MySQL 8.  Do __NOT__ use MySQL 5.7, as the protocol is changed.
+
 ## Installation
 
 To run the application, you'll need to install the yarn and concurrently programs.  To install these programs, run the following commands:
