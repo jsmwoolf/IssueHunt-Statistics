@@ -18,8 +18,7 @@ npm install -g yarn
 To install the modules required, run the following command in command line:
 
 ```bash
-npm install -g concurrently
-npm install -g yarn
+npm install
 ```
 
 ## Running the Application
