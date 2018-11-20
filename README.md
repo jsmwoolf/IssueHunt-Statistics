@@ -22,6 +22,16 @@ npm install -g concurrently
 npm install -g yarn
 ```
 
+## Running the Application
+
+For first time usage, you'll need to import the schema from schema.sql.  You can run the following command:
+
+```bash
+mysql -u <username> -p IssueHunt_Database < schema.sql
+```
+
+The command above can also reinitialize the database.
+
 To run on a local machine, enter the following command:
 
 ```bash
