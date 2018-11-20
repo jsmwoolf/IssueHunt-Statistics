@@ -3,15 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@mysql/xdevapi": "^8.0.13",
+    "body-parser": "^1.18.3",
+    "chart.js": "^2.7.3",
+    "cheerio": "^1.0.0-rc.2",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
     "react": "^16.6.0",
+    "react-chartjs-2": "^2.7.4",
     "react-dom": "^16.6.0",
-    "react-scripts": "2.0.5"
+    "react-scripts": "2.0.5",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "concurrently --kill-others-on-fail \"nodemon server.js\" \"react-scripts start\""
   },
   "eslintConfig": {
     "extends": "react-app"
