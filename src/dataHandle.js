@@ -122,6 +122,22 @@ const getOpenIssuesByDate = (callback) => {
     });
 };
 
+const getRepoList = (callback) => {
+    let rows = []
+    client.then((session) => {
+        return session
+            .sql('SELECT name FROM IssueHunt_Database.IssueHunt_Repos;')
+            .execute((row) => {
+                rows.push(row);
+            })
+    }).then((res) => {
+        console.log(rows);
+        return callback(rows);
+    }).catch((error) => {
+        throw error;
+    });
+};
+
 const insertRepoRecord = (data, retrievedDate) => {
     const name = data.Name;
     let description = data.Description;
@@ -180,4 +196,10 @@ const insertRepoRecord = (data, retrievedDate) => {
     });
 };
 
-module.exports = {loadNewRepoListData, getCountByDate, getTotalFundsByDate, getOpenIssuesByDate};
+module.exports = {
+    loadNewRepoListData, 
+    getCountByDate, 
+    getTotalFundsByDate, 
+    getOpenIssuesByDate,
+    getRepoList
+};

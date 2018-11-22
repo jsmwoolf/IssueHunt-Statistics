@@ -18,6 +18,12 @@ app.get('/update/repo', (req, res) => {
     });
 })
 
+app.get('/repo/list', (req, res) => {
+    dataServer.getRepoList((dataset) => {
+        res.json({results:dataset});
+    });
+})
+
 app.get('/repo/count', (req, res) => {
     console.log('Retreiving number of repos');
     dataServer.getCountByDate((dataset) => {

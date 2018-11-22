@@ -7,13 +7,36 @@ import './App.css';
 class App extends Component {
   constructor(props) {
     super(props)
-    this.state = {tabmode: "Global"}
+    this.state = {
+      tabmode: "Global",
+      updateInterval: 15 * 60 * 1000
+    }
   }
 
   changeMode(mode) {
+    console.log(mode);
     this.setState({
         tabmode: mode
       });
+  }
+
+  updateRepoData() {
+    fetch('http://localhost:8080/update/repo').then(() => {
+      console.log('Updated database from Issuehunt.io');
+    });
+  }
+
+  componentDidMount() {
+    // Update the database every 15 mintues
+    this.updateRepoData();
+    this.updater = setInterval(() => {
+      this.updateRepoData();
+    }, this.state.updateInterval);
+    console.log(`Set up to update every ${this.state.updateInterval / 60000} minutes`);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.updater)
   }
   
   render() {

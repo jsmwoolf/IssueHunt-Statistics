@@ -26,15 +26,13 @@ export class GlobalPanel extends Component {
     * @returns A Promise that allows us to access the data.
     */
     retrieveDataSet(url) {
-      return fetch('http://localhost:8080/update/repo').then(() => {
-        return fetch(url).then((response) => {
-          console.log('Got data');
-          if (response.status === 200) {
-            return response.json();
-          } else {
-            throw Error("Issue with response!");
-          }
-        });
+      return fetch(url).then((response) => {
+        console.log('Got data');
+        if (response.status === 200) {
+          return response.json();
+        } else {
+          throw Error("Issue with response!");
+        }
       });
     }
   

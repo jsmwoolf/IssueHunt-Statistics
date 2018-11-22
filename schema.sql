@@ -14,3 +14,10 @@ CREATE TABLE IF NOT EXISTS IssueHunt_Database.IssueHunt_Repos (
     funded DECIMAL(9, 2),
     retrievedDate DATE
 );
+
+# Holds all repo links.  Should only be modified when repositories are added or removed
+CREATE TABLE IF NOT EXISTS IssueHunt_Database.IssueHunt_Repos (
+    id INT AUTO_INCREMENT PRIMARY KEY,   
+    name TEXT,
+    url TEXT
+);
