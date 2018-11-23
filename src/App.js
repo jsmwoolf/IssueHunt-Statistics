@@ -15,7 +15,6 @@ class App extends Component {
   }
 
   changeMode(mode) {
-    console.log(mode);
     this.setState({
         tabmode: mode,
         updateInterval: this.state.updateInterval

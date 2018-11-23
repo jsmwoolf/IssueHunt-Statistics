@@ -26,9 +26,7 @@ app.get('/repo/list', (req, res) => {
 
 app.get('/repo/count', (req, res) => {
     console.log('Retreiving number of repos');
-    dataServer.getCountByDate((dataset) => {
-        console.log(dataset);
-        
+    dataServer.getCountByDate((dataset) => { 
         res.json({
             "results": dataset
         })

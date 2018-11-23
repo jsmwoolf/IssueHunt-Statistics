@@ -1,23 +1,36 @@
-DROP DATABASE IF EXISTS IssueHunt_Database;
+#DROP DATABASE IF EXISTS IssueHunt_Database;
 
 CREATE DATABASE IF NOT EXISTS IssueHunt_Database;
 
-# Holds all repo records
-CREATE TABLE IF NOT EXISTS IssueHunt_Database.IssueHunt_Repos (
+# Holds basic repo data.  Should only be modified when repositories are added or removed
+CREATE TABLE IF NOT EXISTS IssueHunt_Database.Repos (
     id INT AUTO_INCREMENT PRIMARY KEY,   
     name TEXT,
+    owner TEXT,
+    url TEXT,
+    insertedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+# Holds all general data from repo.
+CREATE TABLE IF NOT EXISTS IssueHunt_Database.General_Data (
+    id INT AUTO_INCREMENT PRIMARY KEY,   
+    repoID INT NOT NULL,
     description TEXT,
     langauge TEXT,
-    owner TEXT,
     activeFunds DECIMAL(9, 2),
     openIssues INT,
     funded DECIMAL(9, 2),
-    retrievedDate DATE
+    retrievedDate DATE,
+    FOREIGN KEY (repoID) REFERENCES Repos(id)
 );
 
-# Holds all repo links.  Should only be modified when repositories are added or removed
-CREATE TABLE IF NOT EXISTS IssueHunt_Database.IssueHunt_Repos (
+# Holds issue o
+CREATE TABLE IF NOT EXISTS IssueHunt_Database.Issues (
     id INT AUTO_INCREMENT PRIMARY KEY,   
+    repoID INT NOT NULL,
     name TEXT,
-    url TEXT
+    url TEXT,
+    price DECIMAL(9, 2),
+    status CHAR(8),
+    FOREIGN KEY (repoID) REFERENCES Repos(id)
 );

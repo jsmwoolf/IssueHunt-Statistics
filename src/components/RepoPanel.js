@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import './panel.css';
 
 export class RepoPanel extends Component {
     constructor(props) {
@@ -10,7 +11,14 @@ export class RepoPanel extends Component {
     }
 
     componentDidMount() {
-      //this.showRepoList()
+      this.showRepoList();
+    }
+
+    displayRepoInformation(name) {
+      console.log(`Getting repo information for ${name}`);
+      this.setState({
+        currentRepo:name
+      });
     }
 
     /**
@@ -34,20 +42,28 @@ export class RepoPanel extends Component {
     showRepoList() {
       this.retrieveDataSet('http://localhost:8080/repo/list').then((data) => {
         const dataset = data['results'];
-        let repos = []
+        let repos =[]
         dataset.forEach(element => {
-          repos.push(<button>{element}</button>);
+          repos.push(
+            <button className="showOptionsButton" onClick={(name) => this.displayRepoInformation(element)}>
+              {element}
+            </button>
+          );
         });
-        return repos;
+        this.setState({
+          repoList:repos
+        }) ;
       });
     }
 
     render() {
+      let repos = this.state.repoList;
+      console.log(repos);
       return (
         <div>
           {this.state.currentRepo === null ? 
             <div className="repoList">
-              {this.showRepoList()} 
+              {repos} 
             </div>
             : <p>I chose {this.state.currentRepo}</p>}
         </div>
