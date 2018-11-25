@@ -50,8 +50,7 @@ export class RepoPanel extends Component {
       });
     }
 
-    showIssuePercentage() {
-      const issues = this.state.currentRepo.issues;
+    showIssuePercentage(issues) {
       let fundNumbers = [];
       let fundLabel = []
       issues.forEach((element) => {
@@ -79,21 +78,27 @@ export class RepoPanel extends Component {
       return ( 
         <Pie
           data={data}
-          width={400}
-          height={400}
+          width={300}
+          height={300}
           options={{
             maintainAspectRatio: false
           }}
         /> );
+
     }
 
     displayRepoInformation() {
+      const issues = this.state.currentRepo.issues;
       return (
         <div>
-          <h2>{this.state.currentRepo.name} Statistics</h2>
+          <h1>{this.state.currentRepo.name} Statistics</h1>
+          {issues.length !== 0 ? 
           <div>
-            {this.showIssuePercentage()}
+            <h2>Issue Representation</h2>
+            {this.showIssuePercentage(issues)}
           </div>
+          : <p>There are no issues in this repository.</p>
+          }
         </div>
       )
     }
