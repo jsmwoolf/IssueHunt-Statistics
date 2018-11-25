@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "IssueHunt Statistics",
+  "name": "A React Application to show statistics from IssueHunt",
   "icons": [
     {
       "src": "favicon.ico",
