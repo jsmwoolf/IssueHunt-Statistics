@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Line, Pie} from "react-chartjs-2";
+import {Line} from "react-chartjs-2";
 import './panel.css';
 
 export class GlobalPanel extends Component {
@@ -73,7 +73,7 @@ export class GlobalPanel extends Component {
     }
   
     graphByNumberRepo() {
-      this.retrieveDataSet('http://localhost:8080/repo/count').then((data) => {
+      this.retrieveDataSet('http://localhost:8080/global/count').then((data) => {
           const dataset = data['results'];
           var dates = []
           var points = []
@@ -95,7 +95,7 @@ export class GlobalPanel extends Component {
     }
   
     graphByTotalFunds() {
-      this.retrieveDataSet('http://localhost:8080/repo/funds').then((data) => {
+      this.retrieveDataSet('http://localhost:8080/global/funds').then((data) => {
           const dataset = data['results'];
           var dates = []
           var activePoints = []
@@ -120,7 +120,7 @@ export class GlobalPanel extends Component {
     }
   
     graphByTotalIssues() {
-      this.retrieveDataSet('http://localhost:8080/repo/issues').then((data) => {
+      this.retrieveDataSet('http://localhost:8080/global/issues').then((data) => {
           const dataset = data['results'];
           var dates = []
           var points = []

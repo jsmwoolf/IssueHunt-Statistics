@@ -11,6 +11,36 @@ const serverOptions = {
 
 let client = mysqlx.getSession(serverOptions);
 
+////////////////////////////////////////////////////////////////////////////////
+// Heper Methods
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Formats today's date in a format that can be recognized by MySQL.  We work
+ * with UTC time for consistency.
+ */
+const returnFormattedDate= (date) => {
+    const day = date.getUTCDate() < 10 ? "0" + String(date.getUTCDate()) : String(date.getUTCDate());
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${day}`;
+};
+
+/**
+ * Returns a SQL safe string.
+ * 
+ * @param {*} str
+ *      The string that will be converted.
+ */
+const returnSQLSafeString = (str) => {
+    if (str.indexOf('\'') !== -1) {
+        str = str.replace(/\'/g,'\'\'');
+    }
+    return str;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+
 /**
  * Download data from IssueHunt.io to grab all general repository information.
  * 
@@ -80,45 +110,81 @@ const loadNewRepoListData = (callback) => {
  * @param {*} callback
  *      The callback function that will be used when executing is returned.
  */
-const downloadRepoIssueData = (callback) => {
+const downloadRepoIssueData = (name, owner, callback) => {
     const options = {
-        uri: `https://issuehunt.io`,
+        uri: null,
         transform: function (body) {
           return cheerio.load(body);
         }
     };
+    const types = ['', '?tab=idle', '?tab=ready', '?tab=rewarded'];
+    let issues = [];
+    let promises = [];
 
-    client.getSession((session) => {
+    client.then((session) => {
         return session.sql(
-            `SELECT URL FROM IssueHunt_Database.Repos WHERE name = '${name}' AND owner = '${owner}';`
+            `SELECT id, URL FROM IssueHunt_Database.Repos WHERE name = '${name}' AND owner = '${owner}';`
         ).execute((row) => {
-            options.uri += row[0];
-            rp(options).then(($) => {
-                $('article.issueCard').each((i, elem) => {
-                        repoList[i] = {};
-        
-                        repoList[i]['URL']  =   $('a', elem).attr('href');
-                        repoList[i]['Name']  =   $('em', 'header', elem).text();
-                        repoList[i]['Owner']  =   $('span.owner', 'header', elem).text();
-                        repoList[i]['Language']  =   $('p.language', 'header', elem).text();
-                        repoList[i]['Description']  =   $('p.repositoryCard__text', 'header', elem).text();
-        
-                        repoList[i]['Active Deposit'] = $('dd', 'footer', elem)[0]['children'][0].data.substr(1);
-                        repoList[i]['Opened Issues'] = $('dd', 'footer', elem)[1]['children'][0].data;
-                        repoList[i]['Funded'] = $('dd', 'footer', elem)[2]['children'][0].data.substr(1);
-                })
-            })
-        })
+            console.log(row);
+            const baseURL = `https://issuehunt.io${row[1]}`
+            const repoID = row[0];
+            
+            console.log(`RepoID: ${repoID}`);
+            console.log(baseURL);
+            
+            
+            types.forEach((element) => {
+                options.uri = `${baseURL}${element}`;
+                promises.push(rp(options).then(($) => {
+                    
+                    $('article.issueCard').each((i, elem) => {
+                            issue = {};
+                            issue['Status'] = $('strong','h1', elem).text();
+                            const issueName = $('h1', elem).text();
+                            issue['Title'] = issueName.substr(
+                                issue['Status'].length, 
+                                issueName.lastIndexOf('#') - issue['Status'].length
+                            );
+
+                            issue['IssueNumber'] = Number($('span','h1', elem).text().substr(1));
+                            issue['Price'] = Number($('p.price', elem).text().substr(1));
+                            issue['URL'] = $('a', elem).attr('href');
+                            issue['RepoID'] = repoID;
+                            issues.push(issue);
+    
+                    });
+                }));
+            });
+
+            Promise.all(promises).then(() => {
+                //console.log(issues);
+                return callback(issues);
+            });
+        });
     });
 };
 
 /**
- * Formats today's date in a format that can be recognized by MySQL.
+ * Stores new downloaded data into the database from the file
  */
-const returnFormattedDate= (date) => {
-    const day = date.getUTCDate() < 10 ? "0" + String(date.getUTCDate()) : String(date.getUTCDate());
-    return `${date.getFullYear()}-${date.getMonth() + 1}-${day}`;
+const loadNewIssuesData = (name, owner, callback) => {
+    downloadRepoIssueData(name, owner, (dataset) => {
+        console.log('Adding dataset to!');
+        let promiseRepoList = [];
+        dataset.forEach((line) => {
+            console.log(`Working with ${line}`);
+            promiseRepoList.push(insertIssueRecord(line));
+        });
+        Promise.all(promiseRepoList).then(() => {
+            console.log(`Finished adding issues data for ${name} by ${owner}!`);
+            return callback();
+        });
+    });
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// Methods for handling global IssueHunt data.
+////////////////////////////////////////////////////////////////////////////////
 
 const getCountByDate= (callback) => {
     let rows = []
@@ -175,7 +241,7 @@ const getRepoList = (callback) => {
     let rows = []
     client.then((session) => {
         return session
-            .sql('SELECT name FROM IssueHunt_Database.Repos;')
+            .sql('SELECT name, owner FROM IssueHunt_Database.Repos;')
             .execute((row) => {
                 rows.push(row);
             })
@@ -187,8 +253,48 @@ const getRepoList = (callback) => {
     });
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// Methods for handling global IssueHunt data.
+////////////////////////////////////////////////////////////////////////////////
+
+const getIssuesByRepo= (name, owner, callback) => {
+    let results = [];
+    let id = null;
+    client.then((session) => {
+        return session.sql(
+            `SELECT id FROM IssueHunt_Database.Repos WHERE name = '${name}' AND owner = '${owner}';`
+        ).execute(res => {
+            id = res[0];
+        }).then(() => {
+            return session.sql(
+                `SELECT * FROM IssueHunt_Database.Issues WHERE repoId = ${id};`
+            ).execute((row) => {
+                tmp = {}
+                tmp['id'] = row[0];
+                tmp['issueID'] = row[1];
+                tmp['repoID'] = row[2];
+                tmp['name'] = row[3];
+                tmp['url'] = row[4];
+                tmp['price'] = row[5];
+                tmp['status'] = row[6];
+
+                results.push(tmp);
+            });
+        });
+    }).then((res) => {
+        console.log(results);
+        return callback(results);
+    }).catch((error) => {
+        throw error;
+    });
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Methods for inserting records into MySQL
+////////////////////////////////////////////////////////////////////////////////
+
 const insertGeneralRepoData = (data, retrievedDate) => {
-    let description = data.Description;
+    let description = returnSQLSafeString(data.Description);
     const language = data.Language === '' ? 'NULL' : data.Language ;
     const activeFunds = data['Active Deposit']
     const openIssues = data['Opened Issues']
@@ -196,10 +302,6 @@ const insertGeneralRepoData = (data, retrievedDate) => {
     const retrieved = retrievedDate;
     const name = data.Name;
     const owner = data.Owner;
-    if (description.indexOf('\'') !== -1) {
-        description = description.replace(/\'/g,'\'\'');
-    }
-
     return client.then((session) => {
         let table = session.getSchema('IssueHunt_Database').getTable('General_Data');
         return session.sql(
@@ -278,10 +380,53 @@ const insertRepoRecord = (data, retrievedDate) => {
     });
 };
 
+const insertIssueRecord = (data) => {
+    const status = data['Status'];
+    const name = returnSQLSafeString(data['Title']);;
+    const issueID = data['IssueNumber'];
+    const price = data['Price'];
+    const URL = data['URL'];
+    const repoID = data['RepoID'];
+    return client.then((session) => {
+        let table = session.getSchema('IssueHunt_Database').getTable('Issues');
+        return session.sql(
+            `SELECT COUNT(*) FROM IssueHunt_Database.Issues WHERE repoID = ${repoID} AND issueID = ${issueID};`
+            )
+            .execute((row) => {
+                row = row[0]
+                // Insert a new record for the repository
+                if (row === 1) {
+                    return session.sql(
+                        `UPDATE IssueHunt_Database.Issues ` +
+                        `SET name = '${name}', ` +
+                        `url = '${URL}', ` +
+                        `price = ${price}, ` +
+                        `status = '${status}' ` +
+                        `WHERE repoID = '${repoID}' AND issueID = '${issueID}';`
+                        ).execute();
+                }
+                else if (row === 0) {
+                    return table.insert([
+                        'repoID', 'issueID', 'name', 'url', 'price', 'status'
+                    ]).values([
+                        repoID, issueID, name, URL, String(price), status
+                    ]).execute();
+                }
+            });
+    }).catch((error) => {
+        console.log(`An error occurred with ${JSON.stringify(data)}`);
+        throw error;
+        
+    });
+};
+
+
 module.exports = {
     loadNewRepoListData, 
+    loadNewIssuesData,
     getCountByDate, 
     getTotalFundsByDate, 
     getOpenIssuesByDate,
-    getRepoList,
+    getIssuesByRepo,
+    getRepoList
 };

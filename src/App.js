@@ -22,7 +22,7 @@ class App extends Component {
   }
 
   updateRepoData() {
-    fetch('http://localhost:8080/update/repo').then(() => {
+    fetch('http://localhost:8080/global/update').then(() => {
       console.log('Updated database from Issuehunt.io');
     });
   }

@@ -26,11 +26,12 @@ CREATE TABLE IF NOT EXISTS IssueHunt_Database.General_Data (
 
 # Holds issue o
 CREATE TABLE IF NOT EXISTS IssueHunt_Database.Issues (
-    id INT AUTO_INCREMENT PRIMARY KEY,   
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    issueID INT NOT NULL,   
     repoID INT NOT NULL,
     name TEXT,
     url TEXT,
     price DECIMAL(9, 2),
-    status CHAR(8),
+    status TEXT,
     FOREIGN KEY (repoID) REFERENCES Repos(id)
 );
