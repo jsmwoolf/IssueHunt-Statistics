@@ -78,13 +78,94 @@ export class RepoPanel extends Component {
       return ( 
         <Pie
           data={data}
-          width={300}
-          height={300}
+          width={200}
+          height={200}
           options={{
             maintainAspectRatio: false
           }}
         /> );
 
+    }
+
+    showIssuePriceStats(issues) {
+      const getMedian = (a) => {
+        const mid = a.length >> 1;
+        console.log(`Length: ${a.length}, Midpoint: ${mid}`);
+        let res = a[0];
+        if (mid & 1 === 1) {
+          res = a[mid];
+        } else if (mid !== 0) {
+          res = (a[mid] + a[mid-1]) / 2;
+        }
+        return res;
+      };
+      let numUnfunded = 0;
+      let priceByStatus = {};
+      let pricesArray = [];
+      // Variables on average pricing
+      let avgPricing = 0;
+      let avgSubmitPrice = 0,
+          avgReadyPrice = 0,
+          avgRewarded = 0;
+      // Variables on median pricing
+      let medianPrice = 0;
+      let medianPriceSubmitPrice = 0,
+          medianPriceReadyPrice = 0,
+          medianPriceRewarded = 0;
+
+      issues.forEach((element) => {
+        // Count unfunded
+        if (element['status'] === "Unfunded") {
+          numUnfunded += 1;
+        } else {
+          if (!(element['status'] in priceByStatus)) {
+            priceByStatus[element['status']] = [];
+          }
+          priceByStatus[element['status']].push(element["price"]);
+          avgPricing += element["price"];
+        }
+      });
+
+
+      if ("Submitted" in priceByStatus) {
+        priceByStatus["Submitted"].sort();
+        avgSubmitPrice = priceByStatus["Submitted"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Submitted"].length;
+        medianPriceSubmitPrice = getMedian(priceByStatus["Submitted"]);
+        pricesArray = pricesArray.concat(priceByStatus["Submitted"]);
+      }
+      if ("Funded" in priceByStatus) {
+        priceByStatus["Funded"].sort();
+        avgReadyPrice = priceByStatus["Funded"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Funded"].length;
+        medianPriceReadyPrice = getMedian(priceByStatus["Funded"]);
+        pricesArray = pricesArray.concat(priceByStatus["Funded"]);
+      }
+      if ("Rewarded" in priceByStatus) {
+        priceByStatus["Rewarded"].sort();
+        avgRewarded = priceByStatus["Rewarded"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Rewarded"].length;
+        medianPriceRewarded = getMedian(priceByStatus["Rewarded"]);
+        pricesArray = pricesArray.concat(priceByStatus["Rewarded"]);
+      }
+      if (issues.length !== numUnfunded) {
+        pricesArray.sort();
+        avgPricing /= (issues.length - numUnfunded);
+        medianPrice = getMedian(pricesArray);
+
+      }
+
+      return (
+        <div>
+          <h3>Averages</h3>
+          <p>Price: {avgPricing}</p>
+          {"Funded" in priceByStatus ? <p>Price of ready issue: {avgReadyPrice}</p> : null}
+          {"Submitted" in priceByStatus ? <p>Price of submitted issue: {avgSubmitPrice}</p> : null}
+          {"Rewarded" in priceByStatus ? <p>Price of rewarded issue: {avgRewarded}</p> : null}
+          <h3>Medians</h3>
+          <p>Price: {medianPrice}</p>
+          {"Funded" in priceByStatus ? <p>Price of ready issue: {medianPriceReadyPrice}</p> : null}
+          {"Submitted" in priceByStatus ? <p>Price of submitted issue: {medianPriceSubmitPrice}</p> : null}
+          {"Rewarded" in priceByStatus ? <p>Price of rewarded issue: {medianPriceRewarded}</p> : null}
+        </div>
+      )
     }
 
     displayRepoInformation() {
@@ -96,6 +177,8 @@ export class RepoPanel extends Component {
           <div>
             <h2>Issue Representation</h2>
             {this.showIssuePercentage(issues)}
+            <h2>Pricing Statistics</h2>
+            {this.showIssuePriceStats(issues)}
           </div>
           : <p>There are no issues in this repository.</p>
           }
