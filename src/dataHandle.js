@@ -58,14 +58,14 @@ const downloadRepoListData = (callback) => {
     let repoList = []
 
     rp(options).then(($) => {
-        $('article.repositoryCard').each((i, elem) => {
+        $('div.col-sm-12').each((i, elem) => {
                 repoList[i] = {};
 
-                repoList[i]['URL']  =   $('a', elem).attr('href');
+                repoList[i]['URL']  =   $('a.hit', elem).attr('href');
                 repoList[i]['Name']  =   $('em', 'header', elem).text();
-                repoList[i]['Owner']  =   $('span.owner', 'header', elem).text();
-                repoList[i]['Language']  =   $('p.language', 'header', elem).text();
-                repoList[i]['Description']  =   $('p.repositoryCard__text', 'header', elem).text();
+                repoList[i]['Owner']  =   $('span', 'header', elem).text();
+                repoList[i]['Language']  =   $('strong.language', 'header', elem).text();
+                repoList[i]['Description']  =   $('p', 'header', elem).text();
 
                 repoList[i]['Active Deposit'] = $('dd', 'footer', elem)[0]['children'][0].data.substr(1);
                 repoList[i]['Opened Issues'] = $('dd', 'footer', elem)[1]['children'][0].data;
@@ -136,28 +136,24 @@ const downloadRepoIssueData = (name, owner, callback) => {
             types.forEach((element) => {
                 options.uri = `${baseURL}${element}`;
                 promises.push(rp(options).then(($) => {
-                    
-                    $('article.issueCard').each((i, elem) => {
-                            issue = {};
-                            issue['Status'] = $('strong','h1', elem).text();
-                            const issueName = $('h1', elem).text();
-                            issue['Title'] = issueName.substr(
-                                issue['Status'].length, 
-                                issueName.lastIndexOf('#') - issue['Status'].length
-                            );
-
-                            issue['IssueNumber'] = Number($('span','h1', elem).text().substr(1));
-                            issue['Price'] = Number($('p.price', elem).text().substr(1));
-                            issue['URL'] = $('a', elem).attr('href');
-                            issue['RepoID'] = repoID;
-                            issues.push(issue);
-    
+                    $('div.row--new > div.col-lg-7--new > ul > li').each((i, elem) => {
+                        issue = {};
+                        issue['URL'] = $('a.hit', elem).attr('href');
+                        issue['Status'] = $('a.hit > article > header > p > em',elem).eq(0).text();
+                        issue['Title']= $('a.hit > article > header > h1', elem).text();
+                        const issueUser = $('a.hit > article > header > p > em.--repositoryId', elem).text();
+                        issue['User'] = issueUser.substr(0, issueUser.indexOf("/"));
+                        issue['IssueNumber'] = Number(issueUser.substr(issueUser.lastIndexOf('#')+1));
+                        issue['Price'] = Number($('a.hit > article.issueCard >  p.price', elem).text().substr(1));
+                        
+                        issue['RepoID'] = repoID;
+                        issues.push(issue);
                     });
                 }));
             });
 
             Promise.all(promises).then(() => {
-                //console.log(issues);
+                console.log(issues);
                 return callback(issues);
             });
         });
@@ -368,6 +364,9 @@ const insertRepoRecord = (data, retrievedDate) => {
                 row = row[0]
                 // Insert a new record for the repository
                 if (row === 0) {
+                    /*console.log(name);
+                    console.log(owner);
+                    console.log(url);*/
                     return table.insert([
                         'name', 'owner', 'url', 'insertedDate'
                     ]).values([
@@ -387,6 +386,7 @@ const insertIssueRecord = (data) => {
     const price = data['Price'];
     const URL = data['URL'];
     const repoID = data['RepoID'];
+    const user = data['User'];
     return client.then((session) => {
         let table = session.getSchema('IssueHunt_Database').getTable('Issues');
         return session.sql(
@@ -401,15 +401,16 @@ const insertIssueRecord = (data) => {
                         `SET name = '${name}', ` +
                         `url = '${URL}', ` +
                         `price = ${price}, ` +
-                        `status = '${status}' ` +
+                        `status = '${status}', ` +
+                        `createdBy = '${user}' ` +
                         `WHERE repoID = '${repoID}' AND issueID = '${issueID}';`
                         ).execute();
                 }
                 else if (row === 0) {
                     return table.insert([
-                        'repoID', 'issueID', 'name', 'url', 'price', 'status'
+                        'repoID', 'issueID', 'name', 'url', 'price', 'status', 'createdBy'
                     ]).values([
-                        repoID, issueID, name, URL, String(price), status
+                        repoID, issueID, name, URL, String(price), status, user
                     ]).execute();
                 }
             });

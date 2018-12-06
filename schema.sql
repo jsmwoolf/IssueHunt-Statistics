@@ -1,4 +1,4 @@
-#DROP DATABASE IF EXISTS IssueHunt_Database;
+DROP DATABASE IF EXISTS IssueHunt_Database;
 
 CREATE DATABASE IF NOT EXISTS IssueHunt_Database;
 
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS IssueHunt_Database.General_Data (
     FOREIGN KEY (repoID) REFERENCES Repos(id)
 );
 
-# Holds issue o
+# Holds issue to a repository
 CREATE TABLE IF NOT EXISTS IssueHunt_Database.Issues (
     id INT AUTO_INCREMENT PRIMARY KEY,
     issueID INT NOT NULL,   
@@ -33,5 +33,6 @@ CREATE TABLE IF NOT EXISTS IssueHunt_Database.Issues (
     url TEXT,
     price DECIMAL(9, 2),
     status TEXT,
+    createdBy TEXT,
     FOREIGN KEY (repoID) REFERENCES Repos(id)
 );
