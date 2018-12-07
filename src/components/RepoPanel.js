@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {Pie} from "react-chartjs-2";
+import {Tab, TabList, TabPanel, Tabs} from 'react-tabs';
 import './panel.css';
 
 export class RepoPanel extends Component {
@@ -76,14 +77,16 @@ export class RepoPanel extends Component {
       };
       console.log(data);
       return ( 
+        <div className="col-md-4">
         <Pie
           data={data}
-          width={200}
-          height={200}
+          width={400}
+          height={400}
           options={{
             maintainAspectRatio: false
           }}
-        /> );
+        /> 
+        </div>);
 
     }
 
@@ -99,6 +102,9 @@ export class RepoPanel extends Component {
         }
         return res;
       };
+      const getMax = (a) => {
+        return a[a.length - 1];
+      }
       let numUnfunded = 0;
       let priceByStatus = {};
       let pricesArray = [];
@@ -112,6 +118,11 @@ export class RepoPanel extends Component {
       let medianPriceSubmitPrice = 0,
           medianPriceReadyPrice = 0,
           medianPriceRewarded = 0;
+      // Variables on median pricing
+      let maxPrice = 0;
+      let maxPriceSubmitPrice = 0,
+          maxPriceReadyPrice = 0,
+          maxPriceRewarded = 0;
 
       issues.forEach((element) => {
         // Count unfunded
@@ -123,6 +134,7 @@ export class RepoPanel extends Component {
           }
           priceByStatus[element['status']].push(element["price"]);
           avgPricing += element["price"];
+          maxPrice = maxPrice < element["price"] ? element["price"] : maxPrice;
         }
       });
 
@@ -131,18 +143,21 @@ export class RepoPanel extends Component {
         priceByStatus["Submitted"].sort();
         avgSubmitPrice = priceByStatus["Submitted"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Submitted"].length;
         medianPriceSubmitPrice = getMedian(priceByStatus["Submitted"]);
+        maxPriceSubmitPrice = getMax(priceByStatus["Submitted"]);
         pricesArray = pricesArray.concat(priceByStatus["Submitted"]);
       }
       if ("Funded" in priceByStatus) {
         priceByStatus["Funded"].sort();
         avgReadyPrice = priceByStatus["Funded"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Funded"].length;
         medianPriceReadyPrice = getMedian(priceByStatus["Funded"]);
+        maxPriceReadyPrice = getMax(priceByStatus["Funded"]);
         pricesArray = pricesArray.concat(priceByStatus["Funded"]);
       }
       if ("Rewarded" in priceByStatus) {
         priceByStatus["Rewarded"].sort();
         avgRewarded = priceByStatus["Rewarded"].reduce((sum, val) => sum+=val, 0) / priceByStatus["Rewarded"].length;
         medianPriceRewarded = getMedian(priceByStatus["Rewarded"]);
+        maxPriceRewarded = getMax(priceByStatus["Rewarded"]);
         pricesArray = pricesArray.concat(priceByStatus["Rewarded"]);
       }
       if (issues.length !== numUnfunded) {
@@ -154,16 +169,32 @@ export class RepoPanel extends Component {
 
       return (
         <div>
-          <h3>Averages</h3>
-          <p>Price: {avgPricing}</p>
-          {"Funded" in priceByStatus ? <p>Price of ready issue: {avgReadyPrice}</p> : null}
-          {"Submitted" in priceByStatus ? <p>Price of submitted issue: {avgSubmitPrice}</p> : null}
-          {"Rewarded" in priceByStatus ? <p>Price of rewarded issue: {avgRewarded}</p> : null}
-          <h3>Medians</h3>
-          <p>Price: {medianPrice}</p>
-          {"Funded" in priceByStatus ? <p>Price of ready issue: {medianPriceReadyPrice}</p> : null}
-          {"Submitted" in priceByStatus ? <p>Price of submitted issue: {medianPriceSubmitPrice}</p> : null}
-          {"Rewarded" in priceByStatus ? <p>Price of rewarded issue: {medianPriceRewarded}</p> : null}
+          <Tabs>
+            <TabList>
+              <Tab>Average</Tab>
+              <Tab>Median</Tab>
+              <Tab>Max</Tab>
+            </TabList>
+
+            <TabPanel>
+            <p>Price: {avgPricing}</p>
+            {"Funded" in priceByStatus ? <p>Ready issue: {avgReadyPrice}</p> : null}
+            {"Submitted" in priceByStatus ? <p>Submitted issue: {avgSubmitPrice}</p> : null}
+            {"Rewarded" in priceByStatus ? <p>Rewarded issue: {avgRewarded}</p> : null}
+            </TabPanel>
+            <TabPanel>
+            <p>Price: {medianPrice}</p>
+            {"Funded" in priceByStatus ? <p>Ready issue: {medianPriceReadyPrice}</p> : null}
+            {"Submitted" in priceByStatus ? <p>Submitted issue: {medianPriceSubmitPrice}</p> : null}
+            {"Rewarded" in priceByStatus ? <p>Rewarded issue: {medianPriceRewarded}</p> : null}
+              </TabPanel>
+              <TabPanel>
+              <p>Price: {maxPrice}</p>
+            {"Funded" in priceByStatus ? <p>Ready issue: {maxPriceReadyPrice}</p> : null}
+            {"Submitted" in priceByStatus ? <p>Submitted issue: {maxPriceSubmitPrice}</p> : null}
+            {"Rewarded" in priceByStatus ? <p>Rewarded issue: {maxPriceRewarded}</p> : null}
+              </TabPanel>
+          </Tabs>
         </div>
       )
     }
