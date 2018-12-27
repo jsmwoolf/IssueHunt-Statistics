@@ -8,14 +8,15 @@ To run the application, you'll need to install MySQL 8.  Do __NOT__ use MySQL 5.
 
 ## Installation
 
-To run the application, you'll need to install the yarn and concurrently programs.  To install these programs, run the following commands:
+To run the application, you'll need to install yarn, nodemod, and concurrently.  To install these programs, run the following commands:
 
 ```bash
 npm install -g concurrently
+npm install -g nodemod
 npm install -g yarn
 ```
 
-To install the modules required, run the following command in command line:
+To install the modules required from package.json, run the following command in command line:
 
 ```bash
 npm install
